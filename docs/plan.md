@@ -10,6 +10,15 @@ _Last updated: 2026-11-05_
 
 ## Next up
 
+### Test automation
+
+- [ ] Run the Playwright tests in GitHub Actions
+- [ ] Add WebKit, closest to iPhone Safari (needs Ubuntu libraries, so it runs in CI but not on Fedora)
+- [ ] Cover the core flows: recipes, copy to partner, leftovers, the review list and failed saves
+- [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
+
+Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model-draft).
+
 ### Milestone 3: Backend and offline sync (Supabase)
 
 - [ ] Create the Supabase project and keep its keys in `.env.local` (git-ignored)
@@ -58,6 +67,10 @@ _Last updated: 2026-11-05_
 - How does a household get shared: invite link or code?
 
 ## Done
+
+### 2026-11-05: Playwright setup
+
+- [x] Playwright in `tests/automation/` as its own package, with a sanity test that plans a meal
 
 ### 2026-11-05: Milestone 2, planning and history
 

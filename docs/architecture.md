@@ -28,6 +28,7 @@ Forkcast is a personal, household meal planner: save recipes, plan upcoming meal
 | CI              | GitHub Actions                             | `biome ci` and the typecheck on every push and PR                             |
 | Local storage   | AsyncStorage                               | One JSON list per data type; `localStorage` on web; stays as the offline copy |
 | Tests           | Jest (`jest-expo`) + Testing Library       | `npm test`, also run in CI                                                    |
+| Web E2E tests   | Playwright (Chromium)                      | `tests/automation/`, its own package; not in CI yet                           |
 | Backend         | Supabase (planned)                         | Postgres, Auth and Storage; not set up yet                                    |
 
 ## 3. Repository layout
@@ -44,6 +45,7 @@ forkcast/
 │   ├── hooks/          # Reusable hooks (color scheme, theme)
 │   ├── lib/            # Pure helpers (stats, recipe form parsing, confirm dialog)
 │   └── types/          # Domain models (models.ts) and ambient declarations (expo.d.ts)
+├── tests/automation/   # Playwright tests: a separate package with its own dependencies
 ├── assets/             # App icons, splash and images
 ├── docs/               # architecture.md (this file), plan.md
 ├── .github/workflows/  # CI
@@ -160,6 +162,8 @@ Access control: Supabase Row Level Security, so users only see their household's
 | `npm run fix`    | Biome auto-fix (lint, format, import sorting) |
 | `npm run doctor` | `expo-doctor` dependency and config checks    |
 
+**Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder.
+
 **TypeScript extras:** `noUncheckedIndexedAccess`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
 
 **Biome:** single quotes, 2-space indentation, 100-character lines, `bracketSameLine`, and the React domain rules. `noReactNativeRawText` has to know which components render text. When you add a text-rendering component, add it to that rule's `skip` list in `biome.json`.
@@ -184,3 +188,4 @@ Short records of important choices. Add new ones at the bottom.
 | 10  | 2026-11-05 | Times eaten excludes leftovers                         | It should answer "how often do we make this", not count one pot of soup three times           |
 | 11  | 2026-11-05 | AsyncStorage for local data, not `expo-sqlite`         | Works everywhere with no setup; SQLite on web needs wasm config and COOP/COEP headers         |
 | 12  | 2026-11-05 | Offline-first: local data stays, and syncs to Supabase | Must keep working with no internet; replaces the plan to move data off the device             |
+| 13  | 2026-11-05 | Playwright for web E2E, in its own package             | Covers web and the iPhone PWA, can test offline, and stays out of the app's dependencies      |
