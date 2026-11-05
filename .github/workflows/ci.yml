@@ -5,12 +5,22 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+# A new push to a PR replaces its running pipeline. Runs on main always finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check:
+    name: Lint, types and unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -21,3 +31,51 @@ jobs:
         run: npm run typecheck
       - name: Unit tests (Jest)
         run: npm test
+
+  build:
+    name: Android bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Bundle for Android
+        run: npx expo export --platform android
+
+  e2e:
+    name: Web E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tests/automation/package-lock.json
+      - name: Install the app
+        run: npm ci
+      - name: Install Playwright
+        working-directory: tests/automation
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      # Playwright builds the production web bundle, so this also checks that it builds.
+      - name: Run Playwright
+        working-directory: tests/automation
+        run: npm test
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            tests/automation/playwright-report/
+            tests/automation/test-results/
+          retention-days: 7

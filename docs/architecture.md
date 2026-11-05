@@ -25,10 +25,10 @@ Forkcast is a personal, household meal planner: save recipes, plan upcoming meal
 | Compiler        | React Compiler (enabled in `app.json`)     | Automatic memoization; avoid manual `useMemo`/`useCallback` by default        |
 | Lint and format | Biome 2                                    | Single tool and config (`biome.json`); no ESLint or Prettier                  |
 | Git hooks       | Lefthook                                   | Pre-commit runs Biome on staged files, then the typecheck                     |
-| CI              | GitHub Actions                             | `biome ci` and the typecheck on every push and PR                             |
+| CI              | GitHub Actions                             | Three jobs: lint, types and Jest; Android bundle; Playwright                  |
 | Local storage   | AsyncStorage                               | One JSON list per data type; `localStorage` on web; stays as the offline copy |
 | Tests           | Jest (`jest-expo`) + Testing Library       | `npm test`, also run in CI                                                    |
-| Web E2E tests   | Playwright (Chromium)                      | `tests/automation/`, its own package; not in CI yet                           |
+| Web E2E tests   | Playwright (Chromium)                      | `tests/automation/`, its own package; runs in CI                              |
 | Backend         | Supabase (planned)                         | Postgres, Auth and Storage; not set up yet                                    |
 
 ## 3. Repository layout
@@ -164,6 +164,8 @@ Access control: Supabase Row Level Security, so users only see their household's
 
 **Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder.
 
+**CI:** `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`, with three independent jobs: `check` (Biome, `tsc`, Jest), `build` (`expo export` for Android) and `e2e` (Playwright, which also builds the web bundle; its report is uploaded on failure). A clean checkout has no `.expo/types`, so CI's typecheck doesn't check typed routes; only a machine that has run the dev server does.
+
 **TypeScript extras:** `noUncheckedIndexedAccess`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
 
 **Biome:** single quotes, 2-space indentation, 100-character lines, `bracketSameLine`, and the React domain rules. `noReactNativeRawText` has to know which components render text. When you add a text-rendering component, add it to that rule's `skip` list in `biome.json`.
@@ -189,3 +191,4 @@ Short records of important choices. Add new ones at the bottom.
 | 11  | 2026-11-05 | AsyncStorage for local data, not `expo-sqlite`         | Works everywhere with no setup; SQLite on web needs wasm config and COOP/COEP headers         |
 | 12  | 2026-11-05 | Offline-first: local data stays, and syncs to Supabase | Must keep working with no internet; replaces the plan to move data off the device             |
 | 13  | 2026-11-05 | Playwright for web E2E, in its own package             | Covers web and the iPhone PWA, can test offline, and stays out of the app's dependencies      |
+| 14  | 2026-11-05 | Public repo under the MIT license; merge through PRs   | Lets branch protection require green CI; good for the CV                                      |
