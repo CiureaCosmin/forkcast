@@ -6,14 +6,14 @@ _Last updated: 2026-11-05_
 
 ## In progress
 
-- [ ] Push the repo to GitHub and confirm the first CI run is green
+- [ ] Push the repo to GitHub as public and confirm the first CI run is green
+- [ ] Protect `main`: require PRs and the three CI jobs
 
 ## Next up
 
 ### Test automation
 
-- [ ] Run the Playwright tests in GitHub Actions
-- [ ] Add WebKit, closest to iPhone Safari (needs Ubuntu libraries, so it runs in CI but not on Fedora)
+- [ ] Consider WebKit in CI, closest to iPhone Safari (needs Ubuntu libraries, so it can't run on Fedora)
 - [ ] Cover the core flows: recipes, copy to partner, leftovers, the review list and failed saves
 - [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
 
@@ -63,10 +63,14 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 - Sync: use a library (such as PowerSync) or write our own? Check at the start of Milestone 3.
 - When both phones change the same row offline, should the latest edit win?
 - Is AsyncStorage enough once meals build up? `localStorage` holds only about 5 MB.
-- Which open-source license to add (e.g. MIT)?
 - How does a household get shared: invite link or code?
 
 ## Done
+
+### 2026-11-05: CI pipeline
+
+- [x] Three CI jobs: lint, types and Jest; Android bundle; Playwright in Chromium
+- [x] MIT license
 
 ### 2026-11-05: Playwright setup
 

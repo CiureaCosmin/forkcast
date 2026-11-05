@@ -67,5 +67,6 @@
     "roots": [
       "<rootDir>/src"
     ]
-  }
+  },
+  "license": "MIT"
 }
