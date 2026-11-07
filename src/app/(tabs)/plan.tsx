@@ -124,7 +124,7 @@ export default function PlanScreen() {
               key={date}
               accessibilityRole="button"
               accessibilityLabel={`${WEEKDAYS_LONG[day.getDay()]} ${day.getDate()}`}
-              accessibilityState={{ selected: isSelected }}
+              aria-selected={isSelected}
               onPress={() => setPicked(date)}
               style={({ pressed }) => ({
                 flex: 1,

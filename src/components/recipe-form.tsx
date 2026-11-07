@@ -1,4 +1,4 @@
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, View } from 'react-native';
@@ -28,7 +28,6 @@ export function RecipeForm({
   onSave: (fields: RecipeFields) => Promise<void>;
 }) {
   const theme = useTheme();
-  const navigation = useNavigation();
   const [draft, setDraft] = useState(initial);
   const [newTag, setNewTag] = useState('');
   const [errors, setErrors] = useState<RecipeDraftErrors>({});
@@ -51,13 +50,15 @@ export function RecipeForm({
   };
 
   const dirty = newTag.trim() !== '' || JSON.stringify(draft) !== JSON.stringify(initial);
-  usePreventRemove(dirty && !saved, async ({ data }) => {
+  // `repeat` lifts the guard and retries the blocked navigation. Dispatching the action again
+  // would only be blocked a second time.
+  usePreventRemove(dirty && !saved, async ({ repeat }) => {
     const discard = await confirm({
       title: 'Discard changes?',
       message: "Your changes to this recipe won't be saved.",
       confirmLabel: 'Discard',
     });
-    if (discard) navigation.dispatch(data.action);
+    if (discard) repeat();
   });
 
   // Leaves only after `saved` has rendered, or the unsaved-changes guard would still be active.
