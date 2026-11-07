@@ -1,16 +1,23 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../fixtures';
 
-test('opens the app and plans a meal that survives a reload', async ({ page }) => {
-  await page.goto('/');
+test.use({ signedInAs: null });
 
-  await page.getByRole('button', { name: 'Cosmin', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible();
+test('opens the app and plans a meal that survives a reload', async ({
+  page,
+  whoAreYou,
+  recipes,
+  plan,
+  mealPicker,
+}) => {
+  await whoAreYou.goto();
+  await whoAreYou.choose('Cosmin');
+  await expect(recipes.title).toBeVisible();
 
-  await page.getByRole('tab', { name: 'Plan' }).click();
-  await page.getByRole('button', { name: 'Plan breakfast, Today' }).click();
-  await page.getByRole('button', { name: 'Sarmale', exact: true }).click();
+  await recipes.openTab('Plan');
+  await plan.openPicker('breakfast', 'Today');
+  await mealPicker.pickRecipe('Sarmale');
 
-  const meal = page.getByRole('button', { name: 'Breakfast: Sarmale' });
+  const meal = plan.meal('breakfast', 'Sarmale');
   await expect(meal).toBeVisible();
 
   await page.reload();

@@ -2,7 +2,7 @@
 
 A living document describing how Forkcast is built and why. Update it whenever a structural decision is made. For the to-do list and ideas, see [plan.md](./plan.md).
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-07_
 
 ## 1. Overview
 
@@ -74,6 +74,7 @@ The app has three tabs (Recipes, Plan, History) in the "Fresh Market" design (li
 - **Shared components** (`src/components/`): `Screen` (safe area, scroll, title header), `Card`, `Chip`, `StackContent` (scrolling body for pushed screens), `Button` (primary, secondary, dashed, herb), `SearchField`, `TextField`, `Icon`, `RecipeThumb` (initials tile), `RecipeRow`, `RecipeForm`, `RecipeNotFound`, `MealCard` and `MealRow`, `MealReview`, `PersonSwitcher`, `WhoAreYou`, `SaveErrorBanner`, `StatCard`.
 - **Store:** `src/data/store.ts` holds recipes, meals, the device's person (`me`) and whose data is on screen (`viewing`) in a module-level store read through `useStore()` (`useSyncExternalStore`); `useMe()` gives the person once chosen. Each change writes to AsyncStorage first and updates the UI only if that worked, and saves run one at a time so two quick taps can't overwrite each other. A failed recipe save rejects, for the form to show. A failed meal save shows `SaveErrorBanner` on every screen. Unreadable saved data gives an error state instead of the samples, so the next save can't overwrite it. `recipes` includes archived ones because meals still need their names; use `activeRecipes()` for anything that lists or suggests recipes.
 - **Whose data:** `meals` holds everyone's. Use `mealsFor(meals, id)` before any stat, with `viewing` on Plan and History and `useMe()` on Recipes. Your partner's plan is read-only; "Not X? Switch" on Plan changes `me`, and goes away when auth arrives.
+- **Unsaved changes:** `RecipeForm` guards leaving with `usePreventRemove`. In its callback, call `repeat()` to carry on leaving; dispatching `data.action` again only gets blocked again.
 - **Confirmations:** `src/lib/confirm.ts` uses `Alert`, and `confirm.web.ts` uses `window.confirm` because React Native Web's `Alert` does nothing. Use `confirm()` for destructive actions.
 - **Links:** don't put a function `style` on a `Pressable` inside `Link asChild`: on the web the style is dropped. Use `router.push` in `onPress` instead.
 - **Data layer:** `src/types/models.ts` (`Recipe`, `Meal`, `MealType`, `MealStatus`, `QuickMealType`, `Person`, matching section 5), `src/lib/recipes.ts` (pure recipe form parsing and validation), `src/lib/meals.ts` (pure meal labels and rules), `src/data/sample.ts` (sample recipes and meals; meal dates are generated relative to the real current date so Plan always has meals for today and tomorrow) and `src/lib/stats.ts` (pure functions that derive times eaten, last eaten, "6 days ago", 30-day counts, most eaten and history grouping from the meals, per the "derived, not stored" rule).
@@ -162,7 +163,9 @@ Access control: Supabase Row Level Security, so users only see their household's
 | `npm run fix`    | Biome auto-fix (lint, format, import sorting) |
 | `npm run doctor` | `expo-doctor` dependency and config checks    |
 
-**Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder.
+**Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder. The tests use the Page Object Model: one class per screen in `pages/`, handed to specs as fixtures by `fixtures.ts`, so locators live in one place (see `tests/automation/README.md`). Locators go by role and accessible name, so new UI needs labels and roles that work on the web too.
+
+**Accessibility props on the web:** React Native Web ignores `accessibilityState` and `accessibilityHint`. Use the `aria-*` props (`aria-selected`, for example), which React Native maps for native too.
 
 **CI:** `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`, with three independent jobs: `check` (Biome, `tsc`, Jest), `build` (`expo export` for Android) and `e2e` (Playwright, which also builds the web bundle; its report is uploaded on failure). A clean checkout has no `.expo/types`, so CI's typecheck doesn't check typed routes; only a machine that has run the dev server does.
 
@@ -192,3 +195,4 @@ Short records of important choices. Add new ones at the bottom.
 | 12  | 2026-11-05 | Offline-first: local data stays, and syncs to Supabase | Must keep working with no internet; replaces the plan to move data off the device             |
 | 13  | 2026-11-05 | Playwright for web E2E, in its own package             | Covers web and the iPhone PWA, can test offline, and stays out of the app's dependencies      |
 | 14  | 2026-11-05 | Public repo under the MIT license; merge through PRs   | Lets branch protection require green CI; good for the CV                                      |
+| 15  | 2026-11-07 | Page Object Model for the Playwright tests             | One place per screen for locators, so UI changes touch one file, not every spec               |

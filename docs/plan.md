@@ -2,7 +2,7 @@
 
 The working plan: what's done, what's next, and ideas for later. Tick items off as they're finished and move them to **Done**, with the date. For how things are built, see [architecture.md](./architecture.md).
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-07_
 
 ## In progress
 
@@ -14,7 +14,8 @@ _Last updated: 2026-11-05_
 ### Test automation
 
 - [ ] Consider WebKit in CI, closest to iPhone Safari (needs Ubuntu libraries, so it can't run on Fedora)
-- [ ] Cover the core flows: recipes, copy to partner, leftovers, the review list and failed saves
+- [ ] Run the Playwright tests on a phone-sized WebKit viewport too, once WebKit runs in CI
+- [ ] Offline test: the PWA opens and saves with the network off (after the service worker)
 - [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
 
 Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model-draft).
@@ -66,6 +67,13 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 - How does a household get shared: invite link or code?
 
 ## Done
+
+### 2026-11-07: Page objects and core-flow tests
+
+- [x] Page objects for every screen (`tests/automation/pages/`) and fixtures that hand them to tests
+- [x] 60 Playwright tests: first launch and tabs, recipes (search, tags, add, validation, edit, delete or archive, discard prompt), plan (marking, quick meals, the day strip, copy to partner, leftovers, partner's read-only view), the review list, history and stats, failed saves and unreadable data
+- [x] Fixed: accepting "Discard changes?" on the recipe form didn't leave the form (`usePreventRemove` now needs `repeat()`)
+- [x] Fixed: selected chips, days and tabs didn't expose `aria-selected` on the web
 
 ### 2026-11-05: CI pipeline
 
