@@ -8,13 +8,12 @@ _Last updated: 2026-11-07_
 
 - [ ] Push the repo to GitHub as public and confirm the first CI run is green
 - [ ] Protect `main`: require PRs and the three CI jobs
+- [ ] WebKit (iPhone 15) in the Playwright CI job: confirm its first run is green, then move it to Done
 
 ## Next up
 
 ### Test automation
 
-- [ ] Consider WebKit in CI, closest to iPhone Safari (needs Ubuntu libraries, so it can't run on Fedora)
-- [ ] Run the Playwright tests on a phone-sized WebKit viewport too, once WebKit runs in CI
 - [ ] Offline test: the PWA opens and saves with the network off (after the service worker)
 - [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
 

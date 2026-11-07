@@ -28,7 +28,7 @@ Forkcast is a personal, household meal planner: save recipes, plan upcoming meal
 | CI              | GitHub Actions                             | Three jobs: lint, types and Jest; Android bundle; Playwright                  |
 | Local storage   | AsyncStorage                               | One JSON list per data type; `localStorage` on web; stays as the offline copy |
 | Tests           | Jest (`jest-expo`) + Testing Library       | `npm test`, also run in CI                                                    |
-| Web E2E tests   | Playwright (Chromium)                      | `tests/automation/`, its own package; runs in CI                              |
+| Web E2E tests   | Playwright (Chromium, WebKit)              | `tests/automation/`, its own package; WebKit runs in CI only                  |
 | Backend         | Supabase (planned)                         | Postgres, Auth and Storage; not set up yet                                    |
 
 ## 3. Repository layout
@@ -163,11 +163,11 @@ Access control: Supabase Row Level Security, so users only see their household's
 | `npm run fix`    | Biome auto-fix (lint, format, import sorting) |
 | `npm run doctor` | `expo-doctor` dependency and config checks    |
 
-**Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder. The tests use the Page Object Model: one class per screen in `pages/`, handed to specs as fixtures by `fixtures.ts`, so locators live in one place (see `tests/automation/README.md`). Locators go by role and accessible name, so new UI needs labels and roles that work on the web too.
+**Web E2E tests:** `npm test` inside `tests/automation/` builds the web app, serves it with `expo serve dist` and runs Playwright against that production build. It runs Chromium on a Pixel 7 viewport and, in CI, also WebKit on an iPhone 15, the closest match to the iPhone PWA. WebKit needs Ubuntu's libraries, so locally it runs only with `npm run test:webkit`. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder. The tests use the Page Object Model: one class per screen in `pages/`, handed to specs as fixtures by `fixtures.ts`, so locators live in one place (see `tests/automation/README.md`). Locators go by role and accessible name, so new UI needs labels and roles that work on the web too.
 
 **Accessibility props on the web:** React Native Web ignores `accessibilityState` and `accessibilityHint`. Use the `aria-*` props (`aria-selected`, for example), which React Native maps for native too.
 
-**CI:** `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`, with three independent jobs: `check` (Biome, `tsc`, Jest), `build` (`expo export` for Android) and `e2e` (Playwright, which also builds the web bundle; its report is uploaded on failure). A clean checkout has no `.expo/types`, so CI's typecheck doesn't check typed routes; only a machine that has run the dev server does.
+**CI:** `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`, with three independent jobs: `check` (Biome, `tsc`, Jest), `build` (`expo export` for Android) and `e2e` (Playwright in Chromium and WebKit, which also builds the web bundle; its report is uploaded on failure). A clean checkout has no `.expo/types`, so CI's typecheck doesn't check typed routes; only a machine that has run the dev server does.
 
 **TypeScript extras:** `noUncheckedIndexedAccess`, `noImplicitOverride` and `noFallthroughCasesInSwitch`.
 
@@ -196,3 +196,4 @@ Short records of important choices. Add new ones at the bottom.
 | 13  | 2026-11-05 | Playwright for web E2E, in its own package             | Covers web and the iPhone PWA, can test offline, and stays out of the app's dependencies      |
 | 14  | 2026-11-05 | Public repo under the MIT license; merge through PRs   | Lets branch protection require green CI; good for the CV                                      |
 | 15  | 2026-11-07 | Page Object Model for the Playwright tests             | One place per screen for locators, so UI changes touch one file, not every spec               |
+| 16  | 2026-11-07 | WebKit (iPhone 15) in CI next to Chromium (Pixel 7)    | The iPhone PWA runs on WebKit; only CI's Ubuntu has its libraries                             |

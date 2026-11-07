@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:webkit": "PW_WEBKIT=1 playwright test --project=webkit",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report"
   },

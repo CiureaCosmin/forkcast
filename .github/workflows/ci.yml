@@ -65,9 +65,9 @@ jobs:
         working-directory: tests/automation
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       # Playwright builds the production web bundle, so this also checks that it builds.
-      - name: Run Playwright
+      - name: Run Playwright (Chromium and WebKit)
         working-directory: tests/automation
         run: npm test
       - name: Upload the report

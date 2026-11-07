@@ -6,7 +6,8 @@ Playwright tests for the web app. This folder is its own package, so nothing her
 cd tests/automation
 npm ci
 npx playwright install chromium
-npm test            # builds the web app, serves it and runs the tests
+npm test            # builds the web app, serves it and runs the tests (Chromium; CI adds WebKit)
+npm run test:webkit # WebKit only (needs Ubuntu's libraries: npx playwright install --with-deps webkit)
 npm run test:ui     # the same, in Playwright's UI
 npm run report      # opens the last HTML report
 ```
