@@ -12,6 +12,8 @@ npm run test:ui     # the same, in Playwright's UI
 npm run report      # opens the last HTML report
 ```
 
+The tests run against the app in **local mode**: the build ignores `.env` files (`EXPO_NO_DOTENV=1`), so Supabase keys in `.env.local` don't switch it to backend mode. No backend is needed.
+
 ## Layout
 
 ```
@@ -58,4 +60,4 @@ tests/automation/
 | `storage-errors.spec.ts` | Failed meal saves (banner on every tab, clears after a good save), unreadable saved data and retry                                                                                                                                                                 |
 | `sanity.spec.ts`         | The smoke test: pick a person, plan a meal, reload                                                                                                                                                                                                                 |
 
-**Not covered here:** anything native-only (native tabs, the Android back button, `Alert` confirmations; those wait for mobile automation), the day changing at midnight while the app is open, and how screens look (dark mode, layout).
+**Not covered here:** backend mode (sign-in, households and sync; tested so far by the database tests in `supabase/tests/`, Jest, and by hand against a local Supabase), anything native-only (native tabs, the Android back button, `Alert` confirmations; those wait for mobile automation), the day changing at midnight while the app is open, and how screens look (dark mode, layout).

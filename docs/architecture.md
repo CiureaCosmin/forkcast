@@ -39,7 +39,9 @@ forkcast/
 ├── src/
 │   ├── app/            # Expo Router routes: every file is a screen, _layout.tsx defines navigators
 │   │   ├── (tabs)/     # The three tabs
-│   │   └── recipe/     # Recipe detail and forms, pushed above the tabs
+│   │   ├── meal/       # Meal picker and meal screen (modals)
+│   │   ├── recipe/     # Recipe detail and forms, pushed above the tabs
+│   │   └── household.tsx  # Household screen (backend mode)
 │   ├── components/     # Reusable UI components (*.web.tsx = web-specific variant)
 │   ├── constants/      # Theme (colors, fonts, radii)
 │   ├── data/           # Store, account (sign-in, households), sync engine and sample data
@@ -51,6 +53,7 @@ forkcast/
 ├── assets/             # App icons, splash and images
 ├── docs/               # architecture.md (this file), plan.md
 ├── .github/workflows/  # CI
+├── .env.example        # Supabase keys to copy into the git-ignored .env.local
 ├── app.json            # Expo app config
 ├── biome.json          # Lint and format rules
 ├── lefthook.yml        # Git hooks

@@ -24,9 +24,16 @@ npm run check               # Biome lint/format check + TypeScript typecheck
 npm run fix                 # auto-fix lint and formatting (Biome)
 npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
+npm run db:start            # local Supabase in Docker (db:stop, db:reset, db:test, db:types)
 ```
 
-Run `npm run check` before declaring any task done. Linting and formatting use Biome (`biome.json`), not ESLint or Prettier. TypeScript is pinned to the version Expo expects (6.0); `tsc` is only used for type checking, since Babel/Metro does the transpiling.
+Run `npm run check` before declaring any task done (and `npm run db:test` after database changes).
+
+## Database (Supabase)
+
+- The schema lives in `supabase/migrations/`. Never edit an applied migration: add a new one (`npx supabase migration new <name>`), then run `npm run db:reset`, `npm run db:test` and `npm run db:types` (regenerates `src/types/database.ts`).
+- Every table needs Row Level Security. Synced tables keep `updated_at`, `deleted_at` and `server_updated_at` (see `docs/architecture.md`, section 5), and rows are never hard-deleted.
+- Without `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` the app runs in local mode. Keep both modes working: the Playwright tests use local mode. Linting and formatting use Biome (`biome.json`), not ESLint or Prettier. TypeScript is pinned to the version Expo expects (6.0); `tsc` is only used for type checking, since Babel/Metro does the transpiling.
 
 ## Navigation & Routing
 

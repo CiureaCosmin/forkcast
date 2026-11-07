@@ -6,6 +6,10 @@ _Last updated: 2026-11-07_
 
 ## In progress
 
+**Where things stand (2026-11-07):** all work is pushed. `test/page-objects-core-flows` and `feat/supabase-backend` hold the same commits: the page objects and 81 Playwright tests, WebKit in CI, then the Supabase backend. No pull request is open and CI hasn't run on any of it yet.
+
+- [ ] Open the pull request(s): one from `test/page-objects-core-flows`, or split it so the tests PR ends at `7950f51` and the backend goes in its own PR from `feat/supabase-backend`
+- [ ] Watch the first CI run: the `e2e` job now also runs WebKit, and `npm ci` downloads the Supabase CLI
 - [ ] Push the repo to GitHub as public and confirm the first CI run is green
 - [ ] Protect `main`: require PRs and the three CI jobs
 - [ ] WebKit (iPhone 15) in the Playwright CI job: confirm its first run is green, then move it to Done
@@ -17,7 +21,7 @@ _Last updated: 2026-11-07_
 - [ ] Offline test: the PWA opens and saves with the network off (after the service worker)
 - [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
 
-Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model-draft).
+Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model).
 
 ### Milestone 3: Backend and offline sync (Supabase)
 
