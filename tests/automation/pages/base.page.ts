@@ -5,11 +5,14 @@ export type TabName = 'Recipes' | 'Plan' | 'History';
 /** What every screen shares: the page itself, the tab bar and the app-wide save banner. */
 export abstract class BasePage {
   readonly saveErrorBanner: Locator;
+  /** The stack header's back button on pushed screens. */
+  readonly backButton: Locator;
 
   constructor(readonly page: Page) {
     this.saveErrorBanner = page
       .getByRole('alert')
       .filter({ hasText: "Couldn't save your last change" });
+    this.backButton = page.getByRole('link', { name: /back$/ }).filter({ visible: true });
   }
 
   tab(name: TabName): Locator {

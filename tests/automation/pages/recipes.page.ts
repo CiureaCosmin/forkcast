@@ -10,6 +10,7 @@ export class RecipesPage extends BasePage {
   readonly search: Locator;
   readonly rows: Locator;
   readonly noMatches: Locator;
+  readonly noRecipes: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -20,6 +21,7 @@ export class RecipesPage extends BasePage {
     // Every row ends with its stats, which tells rows apart from the stack's back link.
     this.rows = page.getByRole('link').filter({ hasText: /Eaten \d+×|Not eaten yet/ });
     this.noMatches = page.getByText('No recipes match your search.');
+    this.noRecipes = page.getByText('No recipes yet. Add your first one.');
   }
 
   async goto(): Promise<void> {

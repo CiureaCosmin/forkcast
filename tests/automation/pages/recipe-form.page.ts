@@ -14,6 +14,7 @@ export type RecipeInput = {
 /** The new and edit recipe forms, which are the same component. */
 export class RecipeFormPage extends BasePage {
   readonly name: Locator;
+  readonly notFound: Locator;
   readonly description: Locator;
   readonly prepMinutes: Locator;
   readonly newTag: Locator;
@@ -28,6 +29,7 @@ export class RecipeFormPage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.name = page.getByRole('textbox', { name: 'Name', exact: true });
+    this.notFound = page.getByText('This recipe no longer exists.');
     this.description = page.getByRole('textbox', { name: 'Description (optional)' });
     this.prepMinutes = page.getByRole('textbox', { name: 'Prep time in minutes (optional)' });
     this.newTag = page.getByRole('textbox', { name: 'Tags (optional)' });
@@ -44,6 +46,10 @@ export class RecipeFormPage extends BasePage {
 
   async gotoNew(): Promise<void> {
     await this.page.goto('/recipe/new');
+  }
+
+  async gotoEdit(id: string): Promise<void> {
+    await this.page.goto(`/recipe/${id}/edit`);
   }
 
   tagChip(tag: string): Locator {

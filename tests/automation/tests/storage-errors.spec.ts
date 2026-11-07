@@ -1,4 +1,4 @@
-import { expect, failWrites, STORAGE_KEYS, seedStorage, test } from '../fixtures';
+import { expect, failWrites, restoreWrites, STORAGE_KEYS, seedStorage, test } from '../fixtures';
 
 test.describe('failed meal saves', () => {
   test('show the app-wide banner and leave the plan unchanged', async ({
@@ -26,6 +26,21 @@ test.describe('failed meal saves', () => {
 
     await plan.openTab('Recipes');
     await expect(recipes.saveErrorBanner).toBeVisible();
+  });
+});
+
+test.describe('recovering', () => {
+  test('the banner goes once a later save works', async ({ page, plan, mealPicker }) => {
+    await plan.goto();
+    await failWrites(page, STORAGE_KEYS.meals);
+    await plan.skipButton('dinner', 'Mushroom risotto').click();
+    await expect(plan.saveErrorBanner).toBeVisible();
+
+    await restoreWrites(page);
+    await plan.openPicker('breakfast', 'Today');
+    await mealPicker.pickRecipe('Sarmale');
+    await expect(plan.meal('breakfast', 'Sarmale')).toBeVisible();
+    await expect(plan.saveErrorBanner).toBeHidden();
   });
 });
 

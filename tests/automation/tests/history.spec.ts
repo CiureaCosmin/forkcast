@@ -59,3 +59,21 @@ test.describe('with nothing logged', () => {
     await expect(history.showMoreButton).toBeHidden();
   });
 });
+
+test.describe('after eating today', () => {
+  test("today's meals head the log", async ({ plan, history }) => {
+    await plan.goto();
+    await plan.ateItButton('lunch', 'Pasta e fagioli').click();
+    await expect(plan.mealCard('lunch', 'Pasta e fagioli')).toContainText('Eaten');
+
+    await plan.openTab('History');
+    const headers = history.page.getByRole('heading', { name: /\d+ \w{3}$/ });
+    await expect(headers.first()).toHaveText(`Today · ${shortDate(daysFromToday(0))}`);
+    await expect(history.entry('Pasta e fagioli, Lunch · eaten')).toBeVisible();
+  });
+
+  test('planned meals stay out of the log until marked', async ({ history }) => {
+    await history.goto();
+    await expect(history.dayHeader(/^Today · /)).toBeHidden();
+  });
+});

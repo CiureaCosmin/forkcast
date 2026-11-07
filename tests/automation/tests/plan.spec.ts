@@ -1,5 +1,5 @@
 import { daysFromToday, isoDate, shortDate } from '../dates';
-import { expect, readSaved, type SavedMeal, STORAGE_KEYS, test } from '../fixtures';
+import { expect, readSaved, type SavedMeal, STORAGE_KEYS, sampleMealId, test } from '../fixtures';
 
 // Sample data for Cosmin: today has Pasta e fagioli for lunch and Mushroom risotto for dinner,
 // both planned; tomorrow has Ciorbă de perișoare for dinner. The partner has Chicken shawarma
@@ -251,5 +251,72 @@ test.describe("the partner's plan", () => {
 
     await page.reload();
     await expect(plan.personChip('Partner')).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
+test.describe('meal screen details', () => {
+  test('"Skip" on the meal screen, then back to planned', async ({ plan, mealDetail }) => {
+    await plan.openMeal('dinner', 'Mushroom risotto');
+    await mealDetail.skipButton.click();
+    await expect(plan.mealCard('dinner', 'Mushroom risotto')).toContainText('Skipped');
+
+    await plan.openMeal('dinner', 'Mushroom risotto');
+    await expect(mealDetail.status('Mushroom risotto', 'Skipped')).toBeVisible();
+    await mealDetail.backToPlannedButton.click();
+    await expect(plan.skipButton('dinner', 'Mushroom risotto')).toBeVisible();
+  });
+
+  test('leftovers from yesterday land on today', async ({ plan, mealDetail }) => {
+    await plan.pickDay(daysFromToday(-1));
+    await plan.openMeal('lunch', 'Greek salad with feta');
+    await expect(mealDetail.leftoversLabel).toHaveText(
+      `Leftovers on ${shortDate(daysFromToday(0))}`,
+    );
+    await mealDetail.leftoverSlot('Dinner').click();
+
+    await plan.pickDay(daysFromToday(0));
+    await expect(plan.meal('dinner', 'Greek salad with feta')).toContainText('Leftovers');
+    await expect(plan.meal('dinner', 'Mushroom risotto')).toBeVisible();
+  });
+
+  test('a slot that already has the leftovers is not offered again', async ({
+    plan,
+    mealDetail,
+  }) => {
+    await plan.openMeal('dinner', 'Mushroom risotto');
+    await mealDetail.leftoverSlot('Lunch').click();
+    await expect(plan.meal('lunch', 'Mushroom risotto')).toBeVisible();
+
+    await plan.openMeal('dinner', 'Mushroom risotto');
+    await expect(mealDetail.leftoverSlot('Breakfast')).toBeVisible();
+    await expect(mealDetail.leftoverSlot('Dinner')).toBeVisible();
+    await expect(mealDetail.leftoverSlot('Lunch')).toBeHidden();
+  });
+
+  test('a quick meal can be copied to the partner', async ({ plan, mealPicker, mealDetail }) => {
+    await plan.openPicker('breakfast', 'Today');
+    await mealPicker.pickQuickMeal('Eating out');
+    await plan.openMeal('breakfast', 'Eating out');
+    await mealDetail.copyTo('Partner').click();
+
+    await plan.viewPerson('Partner');
+    await expect(plan.readOnlyMeal('breakfast', 'Eating out')).toBeVisible();
+  });
+
+  test("the partner's meal can't be opened by link", async ({ mealDetail }) => {
+    await mealDetail.goto(sampleMealId('Partner', 'planned', 'shawarma', 0, 'lunch'));
+    await expect(mealDetail.notFound).toBeVisible();
+  });
+
+  test('a later day has no planned-or-eaten choice: it can only be planned', async ({
+    plan,
+    mealPicker,
+  }) => {
+    await plan.openPicker('breakfast', 'Tomorrow');
+    await expect(mealPicker.slotHeading()).toHaveText(`Breakfast · ${shortDate(daysFromToday(1))}`);
+    await expect(mealPicker.plannedChip).toBeHidden();
+    await expect(mealPicker.alreadyEatenChip).toBeHidden();
+    await mealPicker.pickRecipe('Sarmale');
+    await expect(plan.meal('breakfast', 'Sarmale')).toContainText('3 h');
   });
 });

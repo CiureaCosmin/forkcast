@@ -9,6 +9,7 @@ export class RecipeDetailPage extends BasePage {
   readonly ingredientsHeading: Locator;
   readonly stepsHeading: Locator;
   readonly notFound: Locator;
+  readonly deleteError: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -17,6 +18,7 @@ export class RecipeDetailPage extends BasePage {
     this.ingredientsHeading = this.heading('Ingredients');
     this.stepsHeading = this.heading('Steps');
     this.notFound = page.getByText('This recipe no longer exists.');
+    this.deleteError = page.getByRole('alert').filter({ hasText: "Couldn't delete the recipe" });
   }
 
   async goto(id: string): Promise<void> {

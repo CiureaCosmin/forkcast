@@ -70,7 +70,8 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 ### 2026-11-07: Page objects and core-flow tests
 
 - [x] Page objects for every screen (`tests/automation/pages/`) and fixtures that hand them to tests
-- [x] 60 Playwright tests: first launch and tabs, recipes (search, tags, add, validation, edit, delete or archive, discard prompt), plan (marking, quick meals, the day strip, copy to partner, leftovers, partner's read-only view), the review list, history and stats, failed saves and unreadable data
+- [x] 81 Playwright tests: first launch and tabs, recipes (search, tags, add, validation, edit, delete or archive, discard prompt), plan (marking, quick meals, the day strip, copy to partner, leftovers, partner's read-only view), the review list, history and stats, failed saves and unreadable data
+- [x] Filled the gaps from a feature-by-feature check (ingredient search, tag changes, edit discard, failed deletes, archived recipes, leftovers edge cases, banner recovery and more); the coverage table is in `tests/automation/README.md`
 - [x] Fixed: accepting "Discard changes?" on the recipe form didn't leave the form (`usePreventRemove` now needs `repeat()`)
 - [x] Fixed: selected chips, days and tabs didn't expose `aria-selected` on the web
 

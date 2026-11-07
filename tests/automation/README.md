@@ -45,3 +45,17 @@ tests/automation/
 - `seedStorage(page, { meals: [...] })` replaces the sample data before the app loads (once per tab, so the app's own saves survive a reload). A string is stored as is, for unreadable data.
 - `failWrites(page, STORAGE_KEYS.meals)` makes later saves to that key throw, like a full `localStorage`.
 - `readSaved(page, key)` reads a saved list, to check what reached storage.
+
+## What's covered
+
+| Spec                     | Covers                                                                                                                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `onboarding.spec.ts`     | First launch and remembering the person, tabs, opening by URL, back from a recipe link                                                                                                                                                                             |
+| `recipes.spec.ts`        | List and stats (per device owner), search by name and ingredient, tag filters, empty state; add (all fields, name only, validation, new tags), edit, discard prompts, failed save and delete, delete or archive, archived recipes hidden everywhere                |
+| `plan.spec.ts`           | Day strip and day sections; mark eaten, skipped or back to planned (card and meal screen); add recipes and quick meals for today, past and later days; picker search; copy to partner; leftovers; remove; the partner's read-only plan; switching the device owner |
+| `review.spec.ts`         | "Did you eat these?": Yes, No, kept out of history until answered, not on the partner's plan                                                                                                                                                                       |
+| `history.spec.ts`        | 30-day stats, most eaten, "haven't had in a while", the log by day (today, skips, notes, leftovers), "Show more", the partner's history, the empty state                                                                                                           |
+| `storage-errors.spec.ts` | Failed meal saves (banner on every tab, clears after a good save), unreadable saved data and retry                                                                                                                                                                 |
+| `sanity.spec.ts`         | The smoke test: pick a person, plan a meal, reload                                                                                                                                                                                                                 |
+
+**Not covered here:** anything native-only (native tabs, the Android back button, `Alert` confirmations; those wait for mobile automation), the day changing at midnight while the app is open, and how screens look (dark mode, layout).

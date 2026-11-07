@@ -47,3 +47,15 @@ test.describe('tabs', () => {
     await expect(history.tab('History')).toHaveAttribute('aria-selected', 'true');
   });
 });
+
+test.describe('links', () => {
+  test('a recipe opened from a link goes back to the Recipes tab', async ({
+    recipes,
+    recipeDetail,
+  }) => {
+    await recipeDetail.goto('sarmale');
+    await expect(recipeDetail.title('Sarmale')).toBeVisible();
+    await recipeDetail.backButton.click();
+    await expect(recipes.title).toBeVisible();
+  });
+});

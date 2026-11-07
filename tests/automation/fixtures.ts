@@ -100,15 +100,38 @@ export async function seedStorage(
   }, entries);
 }
 
+/** The sample data's meal ids, built from person, status, recipe, days ago and meal type. */
+export function sampleMealId(
+  person: PersonName,
+  status: SavedMeal['status'],
+  recipeId: string,
+  daysAgo: number,
+  mealType: SavedMeal['mealType'],
+): string {
+  return `${PERSON_IDS[person]}-${status}-${recipeId}-${daysAgo}-${mealType}`;
+}
+
+type TestWindow = Window & { forkcastSetItem?: Storage['setItem'] };
+
 /** Makes later writes to a storage key throw, as a full or blocked `localStorage` would. */
 export async function failWrites(page: Page, key: string): Promise<void> {
   await page.evaluate((failing) => {
-    const setItem = Storage.prototype.setItem;
+    const win = window as TestWindow;
+    const setItem = win.forkcastSetItem ?? Storage.prototype.setItem;
+    win.forkcastSetItem = setItem;
     Storage.prototype.setItem = function (this: Storage, name: string, value: string) {
       if (name === failing) throw new DOMException('Quota exceeded', 'QuotaExceededError');
       setItem.call(this, name, value);
     };
   }, key);
+}
+
+/** Undoes `failWrites`. */
+export async function restoreWrites(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const win = window as TestWindow;
+    if (win.forkcastSetItem) Storage.prototype.setItem = win.forkcastSetItem;
+  });
 }
 
 /** Reads a saved list straight from storage. */

@@ -22,6 +22,10 @@ export class MealDetailPage extends BasePage {
     this.notFound = page.getByText('This meal no longer exists.');
   }
 
+  async goto(id: string): Promise<void> {
+    await this.page.goto(`/meal/${id}`);
+  }
+
   title(name: string): Locator {
     return this.heading(name);
   }
