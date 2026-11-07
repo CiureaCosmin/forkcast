@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Fonts, MaxContentWidth } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { SyncNotice } from './sync-notice';
 import { ThemedText } from './themed-text';
 
 /** Tab screen shell: safe area, scrolling, and the big title header. */
@@ -54,6 +55,7 @@ export function Screen({
           </View>
           {headerRight}
         </View>
+        <SyncNotice />
         {children}
       </View>
     </ScrollView>

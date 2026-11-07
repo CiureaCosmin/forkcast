@@ -23,7 +23,8 @@ export default defineConfig({
   ],
   // Tests the production web build, from the repo root, so a stale dev server can't mislead them.
   webServer: {
-    command: `npx expo export --platform web && npx expo serve dist --port ${PORT}`,
+    // EXPO_NO_DOTENV: the tests cover local mode, even when .env.local holds Supabase keys.
+    command: `EXPO_NO_DOTENV=1 npx expo export --platform web && npx expo serve dist --port ${PORT}`,
     cwd: '../..',
     url: `http://localhost:${PORT}`,
     timeout: 180_000,

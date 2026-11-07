@@ -21,14 +21,14 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 ### Milestone 3: Backend and offline sync (Supabase)
 
-- [ ] Create the Supabase project and keep its keys in `.env.local` (git-ignored)
-- [ ] Database schema and migrations (recipes, meals, households, members)
-- [ ] Row Level Security policies
-- [ ] Auth: sign in, and join the same household
-- [ ] Sync local data with Supabase: queue changes made offline and send them when back online
-- [ ] Mark rows as deleted instead of removing them, so deletions sync
-- [ ] Show when changes haven't synced yet
+- [ ] Create the Supabase project and keep its URL and publishable key in `.env.local` (see `.env.example`)
+- [ ] Apply the migrations to it: `npx supabase link`, then `npx supabase db push`
+- [ ] Decide on "Confirm email" in the project's auth settings (the app handles both)
+- [ ] Try it on both phones: sign up, join with the code, plan offline, sync
 - [ ] Recipe photos in Supabase Storage
+- [ ] Backend E2E tests: Playwright against a local Supabase, also in CI (Docker on the runner)
+- [ ] Change your name, and leave a household
+- [ ] Reset a forgotten password (needs email sending set up in Supabase)
 
 ### Milestone 4: Ship it to our devices
 
@@ -46,11 +46,9 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 - Shopping list generated from the week's plan (needs ingredient quantities and units in the recipe form)
 - "Suggest something": recipes we haven't eaten in a while, with a "Plan it" button on the History banner
-- Real names for the two people (fixed as Cosmin and Partner until auth)
 - Plan more than a week ahead (the strip shows yesterday plus the next five days)
 - Add a new recipe from the meal picker
 - Weekly planner view (drag and drop)
-- Start with no sample recipes or meals, before real use
 - Favorite recipes and ratings
 - Portions and scaling ingredients
 - Import a recipe from a URL
@@ -60,12 +58,24 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 ## Open questions
 
-- Sync: use a library (such as PowerSync) or write our own? Check at the start of Milestone 3.
-- When both phones change the same row offline, should the latest edit win?
 - Is AsyncStorage enough once meals build up? `localStorage` holds only about 5 MB.
-- How does a household get shared: invite link or code?
+- Live updates (Supabase Realtime) instead of syncing every minute, or is a minute fine?
 
 ## Done
+
+### 2026-11-07: Milestone 3, backend and offline sync
+
+- [x] Local Supabase in Docker (`npm run db:start`), with the CLI as a dev dependency
+- [x] Schema and migration: households, members, recipes, meals, with sync columns
+- [x] Row Level Security, and pgTAP tests for it (`npm run db:test`)
+- [x] Email and password sign-up and sign-in
+- [x] Start a household, or join one with its invite code; real names for the people
+- [x] Moving the device's existing data into a new household
+- [x] Offline sync: a persistent outbox, push then pull, latest edit wins, soft deletes
+- [x] Show when changes haven't synced, a Household screen, signing in again and signing out
+- [x] Local mode stays when no keys are set, so the app and its tests run without a backend
+- [x] Checked end to end in a browser against the local Supabase: two people, copy to partner, offline changes, deletions
+- Answered: our own sync (decision 18), the latest edit wins, households share an invite code (decision 19)
 
 ### 2026-11-07: Page objects and core-flow tests
 

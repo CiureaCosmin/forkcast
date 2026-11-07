@@ -9,6 +9,7 @@ const icons = {
   recipes: { ios: 'book', android: 'menu_book', web: 'menu_book' },
   plan: { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' },
   history: { ios: 'clock.arrow.circlepath', android: 'history', web: 'history' },
+  household: { ios: 'person.2', android: 'group', web: 'group' },
 } as const;
 
 export type IconName = keyof typeof icons;

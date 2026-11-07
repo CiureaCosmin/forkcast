@@ -36,7 +36,8 @@ select matches(
 
 -- Hand the invite code to Ben through a temp table: Ben can't read the household yet.
 reset role;
-create temp table invite as select invite_code as code from public.households;
+create temp table invite as select invite_code as code from public.households
+  where created_by = '00000000-0000-0000-0000-00000000000a';
 grant select on invite to authenticated;
 
 select pg_temp.act_as('00000000-0000-0000-0000-00000000000b');

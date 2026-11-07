@@ -1,4 +1,4 @@
-import type { Meal, MealStatus, MealType, QuickMealType, Recipe } from '@/types/models';
+import type { Meal, MealStatus, MealType, Person, QuickMealType, Recipe } from '@/types/models';
 
 const mealTypeLabels: Record<MealType, string> = {
   breakfast: 'Breakfast',
@@ -55,4 +55,9 @@ export function statusFor(date: string, today: string, eatenToday: boolean): Mea
   if (date < today) return 'eaten';
   if (date > today) return 'planned';
   return eatenToday ? 'eaten' : 'planned';
+}
+
+/** The other person in the household, if they've joined. */
+export function partnerOf(people: Person[], personId: string): Person | undefined {
+  return people.find((person) => person.id !== personId);
 }

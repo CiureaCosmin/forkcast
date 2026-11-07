@@ -13,12 +13,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme, View } from 'react-native';
 
+import { AuthScreen } from '@/components/auth-screen';
 import { Button } from '@/components/button';
+import { HouseholdSetup } from '@/components/household-setup';
 import { SaveErrorBanner } from '@/components/save-error-banner';
 import { ThemedText } from '@/components/themed-text';
 import { WhoAreYou } from '@/components/who-are-you';
 import { Fonts } from '@/constants/theme';
 import { loadData, useStore } from '@/data/store';
+import { startSyncing } from '@/data/sync';
 import { useTheme } from '@/hooks/use-theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -29,7 +32,7 @@ export const unstable_settings = { anchor: '(tabs)' };
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = useTheme();
-  const { status, me } = useStore();
+  const { status, me, mode, account } = useStore();
   const [bricolageLoaded, bricolageError] = useBricolageFonts({ BricolageGrotesque_700Bold });
   const [interLoaded, interError] = useInterFonts({
     Inter_400Regular,
@@ -46,6 +49,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
+
+  // Backend mode: sync while signed in to a household.
+  const householdId = account?.household?.id;
+  useEffect(() => {
+    if (status === 'ready' && householdId) return startSyncing();
+  }, [status, householdId]);
 
   if (!ready) return null;
 
@@ -66,6 +75,10 @@ export default function RootLayout() {
           </ThemedText>
           <Button title="Try again" onPress={loadData} style={{ paddingHorizontal: 24 }} />
         </View>
+      ) : mode === 'backend' && !account ? (
+        <AuthScreen />
+      ) : mode === 'backend' && !account?.household ? (
+        <HouseholdSetup />
       ) : !me ? (
         <WhoAreYou />
       ) : (
@@ -89,6 +102,10 @@ export default function RootLayout() {
               options={{ title: 'Add a meal', presentation: 'modal' }}
             />
             <Stack.Screen name="meal/[id]" options={{ title: 'Meal', presentation: 'modal' }} />
+            <Stack.Screen
+              name="household"
+              options={{ title: 'Household', presentation: 'modal' }}
+            />
             <Stack.Screen
               name="recipe/[id]/edit"
               options={{ title: 'Edit recipe', presentation: 'modal' }}
