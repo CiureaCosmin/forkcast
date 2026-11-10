@@ -50,7 +50,7 @@ export function TabButton({
       // RN 0.88's Pressable ref type. At runtime it is the Pressable's host element.
       ref={ref as unknown as React.Ref<React.ComponentRef<typeof Pressable>>}
       accessibilityRole="tab"
-      accessibilityState={{ selected: !!isFocused }}
+      aria-selected={!!isFocused}
       style={({ pressed }) => ({
         flex: 1,
         alignItems: 'center',

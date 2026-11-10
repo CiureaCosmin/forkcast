@@ -20,7 +20,7 @@ export function Chip({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: !!selected }}
+      aria-selected={!!selected}
       onPress={onPress}
       style={({ pressed }) => ({
         minHeight: 44,

@@ -4,16 +4,16 @@ import { Pressable, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
+import { Icon } from '@/components/icon';
 import { MealCard, MealRow } from '@/components/meal-card';
 import { MealReview } from '@/components/meal-review';
 import { PersonSwitcher } from '@/components/person-switcher';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts } from '@/constants/theme';
-import { partnerOf, people } from '@/data/sample';
 import { chooseMe, useMe, useStore } from '@/data/store';
 import { useTheme } from '@/hooks/use-theme';
-import { mealsFor, mealsToReview, mealTypeLabel } from '@/lib/meals';
+import { mealsFor, mealsToReview, mealTypeLabel, partnerOf } from '@/lib/meals';
 import {
   addDays,
   agoLabel,
@@ -99,7 +99,7 @@ function DaySection({ date, today }: { date: string; today: string }) {
 
 export default function PlanScreen() {
   const theme = useTheme();
-  const { recipes, meals, viewing } = useStore();
+  const { recipes, meals, viewing, people, mode } = useStore();
   const me = useMe();
   const today = toISODate(new Date());
   const [picked, setPicked] = useState(today);
@@ -108,11 +108,34 @@ export default function PlanScreen() {
   // After midnight the picked day can drop off the strip.
   const selected = days.includes(picked) ? picked : today;
   const toReview = viewing === me ? mealsToReview(mealsFor(meals, me), today) : [];
-  const other = people.find((person) => person.id === partnerOf(me));
+  const other = partnerOf(people, me);
   const current = people.find((person) => person.id === me);
 
   return (
-    <Screen eyebrow={longDateLabel(today)} title="What's cooking">
+    <Screen
+      eyebrow={longDateLabel(today)}
+      title="What's cooking"
+      headerRight={
+        mode === 'backend' ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Household"
+            onPress={() => router.push('/household')}
+            style={({ pressed }) => ({
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: theme.surface,
+              borderWidth: 1,
+              borderColor: theme.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}>
+            <Icon name="household" size={22} color={theme.text} />
+          </Pressable>
+        ) : undefined
+      }>
       <PersonSwitcher />
       {toReview.length > 0 && <MealReview meals={toReview} recipes={recipes} />}
       <View style={{ flexDirection: 'row', gap: 4, paddingTop: 16 }}>
@@ -124,7 +147,7 @@ export default function PlanScreen() {
               key={date}
               accessibilityRole="button"
               accessibilityLabel={`${WEEKDAYS_LONG[day.getDay()]} ${day.getDate()}`}
-              accessibilityState={{ selected: isSelected }}
+              aria-selected={isSelected}
               onPress={() => setPicked(date)}
               style={({ pressed }) => ({
                 flex: 1,
@@ -157,7 +180,8 @@ export default function PlanScreen() {
       </View>
       <DaySection date={selected} today={today} />
       <DaySection date={addDays(selected, 1)} today={today} />
-      {other && current && (
+      {/* Local mode only: with accounts, each phone signs in as its owner. */}
+      {mode === 'local' && other && current && (
         <View style={{ paddingTop: 28, alignItems: 'center' }}>
           <Chip
             label={`Not ${current.name}? Switch to ${other.name}`}

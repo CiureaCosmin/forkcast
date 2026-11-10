@@ -2,33 +2,34 @@
 
 The working plan: what's done, what's next, and ideas for later. Tick items off as they're finished and move them to **Done**, with the date. For how things are built, see [architecture.md](./architecture.md).
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-10_
 
 ## In progress
 
-- [ ] Push the repo to GitHub and confirm the first CI run is green
+**Where things stand (2026-11-10):** all work is on `ci-pipeline`, pushed to GitHub: the CI pipeline, the page objects and 81 Playwright tests, WebKit in CI, the Supabase backend and the docs. The older branches were merged into it; `feat/supabase-backend` is deleted, and `test/page-objects-core-flows` and `claude/automation-tests-pom-pages-x8qgmw` are still on GitHub, waiting to be deleted. A pull request from `ci-pipeline` into `main` is open; CI hasn't finished a run on this work yet.
+
+- [ ] Get the first CI run green on the `ci-pipeline` pull request: the `e2e` job now also runs WebKit, and `npm ci` downloads the Supabase CLI
+- [ ] Merge the pull request into `main`
+- [ ] Protect `main`: require PRs and the three CI jobs
+- [ ] WebKit (iPhone 15) in the Playwright CI job: confirm its first run is green, then move it to Done
 
 ## Next up
 
 ### Test automation
 
-- [ ] Run the Playwright tests in GitHub Actions
-- [ ] Add WebKit, closest to iPhone Safari (needs Ubuntu libraries, so it runs in CI but not on Fedora)
-- [ ] Cover the core flows: recipes, copy to partner, leftovers, the review list and failed saves
+- [ ] Offline test: the PWA opens and saves with the network off (after the service worker)
 - [ ] Mobile automation for the Android app (Appium, WebdriverIO or Maestro)
 
-Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model-draft).
+Product rules are in [architecture.md, section 5](./architecture.md#5-product-rules-and-data-model).
 
 ### Milestone 3: Backend and offline sync (Supabase)
 
-- [ ] Create the Supabase project and keep its keys in `.env.local` (git-ignored)
-- [ ] Database schema and migrations (recipes, meals, households, members)
-- [ ] Row Level Security policies
-- [ ] Auth: sign in, and join the same household
-- [ ] Sync local data with Supabase: queue changes made offline and send them when back online
-- [ ] Mark rows as deleted instead of removing them, so deletions sync
-- [ ] Show when changes haven't synced yet
+- [ ] Decide on "Confirm email" in the project's auth settings (the app handles both)
+- [ ] Try it on both phones: sign up, join with the code, plan offline, sync
 - [ ] Recipe photos in Supabase Storage
+- [ ] Backend E2E tests: Playwright against a local Supabase, also in CI (Docker on the runner)
+- [ ] Change your name, and leave a household
+- [ ] Reset a forgotten password (needs email sending set up in Supabase)
 
 ### Milestone 4: Ship it to our devices
 
@@ -46,11 +47,9 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 - Shopping list generated from the week's plan (needs ingredient quantities and units in the recipe form)
 - "Suggest something": recipes we haven't eaten in a while, with a "Plan it" button on the History banner
-- Real names for the two people (fixed as Cosmin and Partner until auth)
 - Plan more than a week ahead (the strip shows yesterday plus the next five days)
 - Add a new recipe from the meal picker
 - Weekly planner view (drag and drop)
-- Start with no sample recipes or meals, before real use
 - Favorite recipes and ratings
 - Portions and scaling ingredients
 - Import a recipe from a URL
@@ -60,13 +59,42 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 ## Open questions
 
-- Sync: use a library (such as PowerSync) or write our own? Check at the start of Milestone 3.
-- When both phones change the same row offline, should the latest edit win?
 - Is AsyncStorage enough once meals build up? `localStorage` holds only about 5 MB.
-- Which open-source license to add (e.g. MIT)?
-- How does a household get shared: invite link or code?
+- Live updates (Supabase Realtime) instead of syncing every minute, or is a minute fine?
 
 ## Done
+
+### 2026-11-08: Hosted Supabase project
+
+- [x] Connected the repo to the hosted project: URL and publishable key in the git-ignored `.env`, CLI linked
+- [x] Applied the migrations with `npx supabase db push --remote -p <database password>`; signed-out reads return nothing, and signed-out writes and `join_household` are refused
+
+### 2026-11-07: Milestone 3, backend and offline sync
+
+- [x] Local Supabase in Docker (`npm run db:start`), with the CLI as a dev dependency
+- [x] Schema and migration: households, members, recipes, meals, with sync columns
+- [x] Row Level Security, and pgTAP tests for it (`npm run db:test`)
+- [x] Email and password sign-up and sign-in
+- [x] Start a household, or join one with its invite code; real names for the people
+- [x] Moving the device's existing data into a new household
+- [x] Offline sync: a persistent outbox, push then pull, latest edit wins, soft deletes
+- [x] Show when changes haven't synced, a Household screen, signing in again and signing out
+- [x] Local mode stays when no keys are set, so the app and its tests run without a backend
+- [x] Checked end to end in a browser against the local Supabase: two people, copy to partner, offline changes, deletions
+- Answered: our own sync (decision 18), the latest edit wins, households share an invite code (decision 19)
+
+### 2026-11-07: Page objects and core-flow tests
+
+- [x] Page objects for every screen (`tests/automation/pages/`) and fixtures that hand them to tests
+- [x] 81 Playwright tests: first launch and tabs, recipes (search, tags, add, validation, edit, delete or archive, discard prompt), plan (marking, quick meals, the day strip, copy to partner, leftovers, partner's read-only view), the review list, history and stats, failed saves and unreadable data
+- [x] Filled the gaps from a feature-by-feature check (ingredient search, tag changes, edit discard, failed deletes, archived recipes, leftovers edge cases, banner recovery and more); the coverage table is in `tests/automation/README.md`
+- [x] Fixed: accepting "Discard changes?" on the recipe form didn't leave the form (`usePreventRemove` now needs `repeat()`)
+- [x] Fixed: selected chips, days and tabs didn't expose `aria-selected` on the web
+
+### 2026-11-05: CI pipeline
+
+- [x] Three CI jobs: lint, types and Jest; Android bundle; Playwright in Chromium
+- [x] MIT license
 
 ### 2026-11-05: Playwright setup
 

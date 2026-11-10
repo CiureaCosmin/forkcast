@@ -3,11 +3,8 @@ import type { Meal, MealType, Person, Recipe } from '@/types/models';
 
 const first: Person = { id: 'person-1', name: 'Cosmin' };
 const second: Person = { id: 'person-2', name: 'Partner' };
+/** Local mode's fixed people. With a backend, the household's members replace them. */
 export const people = [first, second];
-
-export function partnerOf(personId: string): string {
-  return personId === first.id ? second.id : first.id;
-}
 
 const createdAt = '2026-11-04T00:00:00.000Z';
 const updatedAt = createdAt;

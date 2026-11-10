@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { usePreventRemove } from 'expo-router/react-navigation';
 
 import { RecipeForm } from '@/components/recipe-form';
+import { confirm } from '@/lib/confirm';
 import { emptyDraft } from '@/lib/recipes';
 
-jest.mock('expo-router', () => ({
-  router: { back: jest.fn() },
-  useNavigation: () => ({ dispatch: jest.fn() }),
-}));
+jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
+jest.mock('@/lib/confirm', () => ({ confirm: jest.fn() }));
 jest.mock('expo-symbols', () => ({ SymbolView: () => null }));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -50,4 +50,38 @@ it('stays on the form and shows an error when saving fails', async () => {
     "Couldn't save the recipe. Please try again.",
   );
   expect(router.back).not.toHaveBeenCalled();
+});
+
+describe('leaving with unsaved changes', () => {
+  type Guard = Parameters<typeof usePreventRemove>[1];
+  const latestGuard = () => {
+    const calls = jest.mocked(usePreventRemove).mock.calls;
+    const [active, callback] = calls[calls.length - 1] ?? [];
+    return { active, callback: callback as NonNullable<Guard> };
+  };
+  const leave = async (discard: boolean) => {
+    jest.mocked(confirm).mockResolvedValue(discard);
+    const repeat = jest.fn();
+    await latestGuard().callback({ data: { action: { type: 'GO_BACK' } }, repeat });
+    return repeat;
+  };
+
+  it('guards the screen only once something was typed', async () => {
+    await renderForm(jest.fn());
+    expect(latestGuard().active).toBe(false);
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Ciorbă');
+    expect(latestGuard().active).toBe(true);
+  });
+
+  it('carries on leaving when the changes are discarded', async () => {
+    await renderForm(jest.fn());
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Ciorbă');
+    expect(await leave(true)).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays when the discard is cancelled', async () => {
+    await renderForm(jest.fn());
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Ciorbă');
+    expect(await leave(false)).not.toHaveBeenCalled();
+  });
 });

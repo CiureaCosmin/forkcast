@@ -5,7 +5,6 @@ import { Button } from '@/components/button';
 import { Chip } from '@/components/chip';
 import { StackContent } from '@/components/stack-content';
 import { ThemedText } from '@/components/themed-text';
-import { partnerOf, people } from '@/data/sample';
 import {
   copyToPartner,
   planLeftovers,
@@ -15,14 +14,14 @@ import {
   useStore,
 } from '@/data/store';
 import { confirm } from '@/lib/confirm';
-import { hasSameMeal, mealName, mealTypeLabel } from '@/lib/meals';
+import { hasSameMeal, mealName, mealTypeLabel, partnerOf } from '@/lib/meals';
 import { addDays, MEAL_ORDER, shortDateLabel, toISODate } from '@/lib/stats';
 
 const statusLabels = { planned: 'Planned', eaten: 'Eaten', skipped: 'Skipped' };
 
 export default function MealScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { recipes, meals } = useStore();
+  const { recipes, meals, people } = useStore();
   const me = useMe();
   const meal = meals.find((other) => other.id === id);
   if (!meal || meal.personId !== me) {
@@ -35,9 +34,9 @@ export default function MealScreen() {
 
   const today = toISODate(new Date());
   const name = mealName(meal, recipes);
-  const partnerId = partnerOf(me);
-  const partner = people.find((person) => person.id === partnerId)?.name ?? 'Partner';
-  const partnerHasIt = hasSameMeal(meals, { ...meal, personId: partnerId });
+  const partner = partnerOf(people, me);
+  // Until the partner has joined the household there's nobody to copy to.
+  const canCopy = !!partner && !hasSameMeal(meals, { ...meal, personId: partner.id });
   const nextDay = addDays(meal.date, 1);
   const leftoverSlots = meal.recipeId
     ? MEAL_ORDER.filter((mealType) => !hasSameMeal(meals, { ...meal, date: nextDay, mealType }))
@@ -94,9 +93,9 @@ export default function MealScreen() {
         <Button title="Back to planned" variant="secondary" onPress={() => status('planned')} />
       )}
 
-      {!partnerHasIt && (
+      {canCopy && (
         <Button
-          title={`Copy to ${partner}`}
+          title={`Copy to ${partner.name}`}
           variant="secondary"
           onPress={() => {
             copyToPartner(meal);

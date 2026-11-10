@@ -2,20 +2,46 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
 import { useSyncExternalStore } from 'react';
 
-import { hasSameMeal } from '@/lib/meals';
+import { hasSameMeal, partnerOf } from '@/lib/meals';
 import type { RecipeFields } from '@/lib/recipes';
 import { addDays } from '@/lib/stats';
-import type { Meal, MealStatus, MealType, QuickMealType, Recipe } from '@/types/models';
-import { buildSampleMeals, partnerOf, people, sampleRecipes } from './sample';
+import { isBackendConfigured } from '@/lib/supabase';
+import type { OutboxEntry } from '@/lib/sync';
+import type { Meal, MealStatus, MealType, Person, QuickMealType, Recipe } from '@/types/models';
+import { buildSampleMeals, people as samplePeople, sampleRecipes } from './sample';
 
-const KEYS = {
+export const KEYS = {
   recipes: 'forkcast:recipes:v1',
   meals: 'forkcast:meals:v1',
+  /** Local mode: which of the fixed people uses this device. */
   me: 'forkcast:me:v1',
+  /** Backend mode: the signed-in account and its household's people, so the app opens offline. */
+  account: 'forkcast:account:v1',
+};
+
+/** The signed-in user and their household, once they've created or joined one. */
+export type Account = {
+  userId: string;
+  email: string;
+  household?: { id: string; name: string; inviteCode: string };
+};
+
+export type SyncState = {
+  status: 'idle' | 'syncing' | 'offline' | 'error' | 'signedOut';
+  /** Changes on this device that haven't reached the server yet. */
+  pending: number;
+  lastSyncedAt?: string;
 };
 
 type StoreState = {
   status: 'loading' | 'ready' | 'error';
+  /** `local`: device only, with fixed people. `backend`: signed in and synced with Supabase. */
+  mode: 'local' | 'backend';
+  /** The household's people: the fixed two in local mode, the members in backend mode. */
+  people: Person[];
+  /** Backend mode only. */
+  account: Account | null;
+  sync: SyncState;
   /** All recipes, archived ones included: meals still need to show their names. */
   recipes: Recipe[];
   /** Every person's meals. */
@@ -30,6 +56,10 @@ type StoreState = {
 
 let state: StoreState = {
   status: 'loading',
+  mode: isBackendConfigured() ? 'backend' : 'local',
+  people: [],
+  account: null,
+  sync: { status: 'idle', pending: 0 },
   recipes: [],
   meals: [],
   me: null,
@@ -61,6 +91,10 @@ export function useMe(): string {
   return me;
 }
 
+function readJson<T>(stored: string | null): T | null {
+  return stored === null ? null : (JSON.parse(stored) as T);
+}
+
 function readList<T>(stored: string | null, fallback: () => T[]): T[] {
   const list: unknown = stored === null ? fallback() : JSON.parse(stored);
   if (!Array.isArray(list)) throw new Error('Saved data is not a list');
@@ -68,28 +102,39 @@ function readList<T>(stored: string | null, fallback: () => T[]): T[] {
 }
 
 /**
- * Reads the saved data, or starts from the samples on first launch. Unreadable data ends in the
- * `error` state rather than the samples, so the next save can't overwrite it.
+ * Reads the saved data. In local mode the first launch starts from the samples; in backend mode
+ * it starts empty, because the data comes from the household. Unreadable data ends in the `error`
+ * state rather than a fresh start, so the next save can't overwrite it.
  */
 export async function loadData(): Promise<void> {
   setState({ status: 'loading' });
   try {
-    const [recipes, meals, me] = await Promise.all([
+    const [recipes, meals, me, account] = await Promise.all([
       AsyncStorage.getItem(KEYS.recipes),
       AsyncStorage.getItem(KEYS.meals),
       AsyncStorage.getItem(KEYS.me),
+      AsyncStorage.getItem(KEYS.account),
     ]);
-    const known = people.find((person) => person.id === me)?.id ?? null;
+    const backend = state.mode === 'backend';
+    const saved = backend ? readJson<{ account: Account; people: Person[] }>(account) : null;
+    const people = backend ? (saved?.people ?? []) : samplePeople;
+    const person = backend
+      ? saved?.account.household
+        ? saved.account.userId
+        : null
+      : (people.find((other) => other.id === me)?.id ?? null);
     setState({
       status: 'ready',
+      people,
+      account: saved?.account ?? null,
       // Recipes saved before `updatedAt` existed fall back to their creation time.
-      recipes: readList<Recipe>(recipes, () => sampleRecipes).map((recipe) => ({
+      recipes: readList<Recipe>(recipes, () => (backend ? [] : sampleRecipes)).map((recipe) => ({
         ...recipe,
         updatedAt: recipe.updatedAt ?? recipe.createdAt,
       })),
-      meals: readList<Meal>(meals, buildSampleMeals),
-      me: known,
-      viewing: known ?? '',
+      meals: readList<Meal>(meals, () => (backend ? [] : buildSampleMeals())),
+      me: person,
+      viewing: person ?? '',
     });
   } catch (error) {
     console.error('Could not load saved data', error);
@@ -107,12 +152,50 @@ function enqueue(task: () => Promise<void>): Promise<void> {
   return run;
 }
 
+// Every saved change is also handed to the sync engine (src/data/sync.ts), which registers here
+// so this module doesn't import it.
+type ChangeHandler = (entries: OutboxEntry[]) => Promise<void>;
+let onChange: ChangeHandler | null = null;
+
+export function setChangeHandler(handler: ChangeHandler | null) {
+  onChange = handler;
+}
+
+/** What changed between two versions of a list: new or edited records, and removed ones. */
+function changesBetween<T extends Recipe | Meal>(
+  table: OutboxEntry['table'],
+  before: T[],
+  after: T[],
+): OutboxEntry[] {
+  const now = new Date().toISOString();
+  const old = new Map(before.map((record) => [record.id, record]));
+  const kept = new Set(after.map((record) => record.id));
+  const entries = after
+    .filter((record) => old.get(record.id)?.updatedAt !== record.updatedAt)
+    .map((record) => ({ table, record }));
+  const removed = before
+    .filter((record) => !kept.has(record.id))
+    .map((record) => ({ table, record: { ...record, updatedAt: now }, deletedAt: now }));
+  return [...entries, ...removed] as OutboxEntry[];
+}
+
+async function handOver(entries: OutboxEntry[]) {
+  if (!onChange || entries.length === 0) return;
+  try {
+    await onChange(entries);
+  } catch (error) {
+    console.error('Could not queue the change for syncing', error);
+  }
+}
+
 /** Writes first, so the UI never shows a change that wasn't saved. Failures reject. */
 function saveRecipes(change: (recipes: Recipe[]) => Recipe[]): Promise<void> {
   return enqueue(async () => {
-    const recipes = change(state.recipes);
+    const before = state.recipes;
+    const recipes = change(before);
     await AsyncStorage.setItem(KEYS.recipes, JSON.stringify(recipes));
     setState({ recipes });
+    await handOver(changesBetween('recipes', before, recipes));
   });
 }
 
@@ -120,9 +203,11 @@ function saveRecipes(change: (recipes: Recipe[]) => Recipe[]): Promise<void> {
 function saveMeals(change: (meals: Meal[]) => Meal[]): Promise<void> {
   return enqueue(async () => {
     try {
-      const meals = change(state.meals);
+      const before = state.meals;
+      const meals = change(before);
       await AsyncStorage.setItem(KEYS.meals, JSON.stringify(meals));
       setState({ meals, saveFailed: false });
+      await handOver(changesBetween('meals', before, meals));
     } catch (error) {
       console.error('Could not save meals', error);
       setState({ saveFailed: true });
@@ -196,7 +281,9 @@ function copyOf(meal: Meal, changes: Pick<Meal, 'personId' | 'date' | 'mealType'
 
 /** Puts a planned copy on the partner's plan, for them to mark. Does nothing if they have it. */
 export async function copyToPartner(meal: Meal): Promise<void> {
-  const copy = copyOf(meal, { ...meal, personId: partnerOf(meal.personId) });
+  const partner = partnerOf(state.people, meal.personId);
+  if (!partner) return;
+  const copy = copyOf(meal, { ...meal, personId: partner.id });
   await saveMeals((meals) => (hasSameMeal(meals, copy) ? meals : [...meals, copy]));
 }
 
@@ -209,7 +296,7 @@ export async function planLeftovers(meal: Meal, mealType: MealType): Promise<voi
   await saveMeals((meals) => (hasSameMeal(meals, copy) ? meals : [...meals, copy]));
 }
 
-/** Remembers who uses this device. */
+/** Local mode: remembers which of the fixed people uses this device. */
 export async function chooseMe(id: string): Promise<void> {
   setState({ me: id, viewing: id });
   try {
@@ -222,3 +309,34 @@ export async function chooseMe(id: string): Promise<void> {
 export function viewPerson(id: string) {
   setState({ viewing: id });
 }
+
+/**
+ * For the sync engine and the account module only: they replace data that came from the server,
+ * without handing it back to be synced.
+ */
+export const storeInternals = {
+  getState,
+  setState,
+  enqueue,
+  async writeData(changes: { recipes?: Recipe[]; meals?: Meal[] }) {
+    await Promise.all([
+      changes.recipes && AsyncStorage.setItem(KEYS.recipes, JSON.stringify(changes.recipes)),
+      changes.meals && AsyncStorage.setItem(KEYS.meals, JSON.stringify(changes.meals)),
+    ]);
+    setState(changes);
+  },
+  async writeAccount(account: Account | null, people: Person[]) {
+    if (account) await AsyncStorage.setItem(KEYS.account, JSON.stringify({ account, people }));
+    else await AsyncStorage.removeItem(KEYS.account);
+    const person = account?.household ? account.userId : null;
+    setState({
+      account,
+      people,
+      me: person,
+      viewing:
+        state.viewing && people.some((p) => p.id === state.viewing)
+          ? state.viewing
+          : (person ?? ''),
+    });
+  },
+};

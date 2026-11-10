@@ -10,6 +10,7 @@ import {
   loadData,
   planLeftovers,
   removeMeal,
+  setChangeHandler,
   setMealStatus,
   updateRecipe,
   useStore,
@@ -169,5 +170,64 @@ describe('meals', () => {
     await act(() => deleteRecipe('risotto'));
     const saved = (await store()).current.recipes.find((recipe) => recipe.id === 'risotto');
     expect(saved?.archivedAt).toEqual(expect.any(String));
+  });
+});
+
+describe('changes for syncing', () => {
+  const handler = jest.fn().mockResolvedValue(undefined);
+  beforeEach(() => {
+    handler.mockClear();
+    setChangeHandler(handler);
+  });
+  afterEach(() => setChangeHandler(null));
+
+  const handed = () => handler.mock.calls.flatMap(([entries]) => entries);
+
+  it('hands over new and edited recipes', async () => {
+    await act(() => createRecipe(fields));
+    await act(() => updateRecipe('sarmale', { ...fields, name: 'Sarmale cu mămăligă' }));
+    expect(handed()).toEqual([
+      { table: 'recipes', record: expect.objectContaining({ name: 'Ciulama' }) },
+      {
+        table: 'recipes',
+        record: expect.objectContaining({ id: 'sarmale', name: 'Sarmale cu mămăligă' }),
+      },
+    ]);
+  });
+
+  it('hands over a removed recipe as a deletion, and an archived one as an edit', async () => {
+    await act(() => createRecipe(fields));
+    const created = handed()[0]?.record;
+    handler.mockClear();
+    await act(() => deleteRecipe(created.id));
+    await act(() => deleteRecipe('sarmale'));
+    expect(handed()).toEqual([
+      {
+        table: 'recipes',
+        record: expect.objectContaining({ id: created.id }),
+        deletedAt: expect.any(String),
+      },
+      {
+        table: 'recipes',
+        record: expect.objectContaining({ id: 'sarmale', archivedAt: expect.any(String) }),
+      },
+    ]);
+  });
+
+  it('hands over meal changes, but not a save that failed', async () => {
+    await act(() => chooseMe('person-1'));
+    await act(() =>
+      addMeal({ date: '2026-11-07', mealType: 'lunch', status: 'planned', recipeId: 'risotto' }),
+    );
+    expect(handed()).toEqual([
+      { table: 'meals', record: expect.objectContaining({ recipeId: 'risotto' }) },
+    ]);
+    handler.mockClear();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('full'));
+    await act(() =>
+      addMeal({ date: '2026-11-07', mealType: 'dinner', status: 'planned', recipeId: 'risotto' }),
+    );
+    expect(handler).not.toHaveBeenCalled();
   });
 });

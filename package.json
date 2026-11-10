@@ -7,6 +7,7 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/ui": "~58.0.27",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.119.0",
     "expo": "~58.0.23",
     "expo-constants": "~58.0.15",
     "expo-crypto": "~58.0.7",
@@ -39,6 +40,7 @@
     "jest": "~30.5.2",
     "jest-expo": "~58.0.14",
     "lefthook": "^2.2.2",
+    "supabase": "^3.0.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -53,7 +55,12 @@
     "fix": "biome check --write .",
     "doctor": "npx expo-doctor@latest",
     "prepare": "lefthook install",
-    "test": "jest"
+    "test": "jest",
+    "db:start": "supabase start -x vector,logflare,imgproxy,edge-runtime,supavisor",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "db:types": "supabase gen types typescript --local > src/types/database.ts && biome format --write src/types/database.ts"
   },
   "private": true,
   "engines": {
@@ -67,5 +74,6 @@
     "roots": [
       "<rootDir>/src"
     ]
-  }
+  },
+  "license": "MIT"
 }
