@@ -2,15 +2,14 @@
 
 The working plan: what's done, what's next, and ideas for later. Tick items off as they're finished and move them to **Done**, with the date. For how things are built, see [architecture.md](./architecture.md).
 
-_Last updated: 2026-11-07_
+_Last updated: 2026-11-10_
 
 ## In progress
 
-**Where things stand (2026-11-07):** all work is pushed. `test/page-objects-core-flows` and `feat/supabase-backend` hold the same commits: the page objects and 81 Playwright tests, WebKit in CI, then the Supabase backend. No pull request is open and CI hasn't run on any of it yet.
+**Where things stand (2026-11-10):** all work is on `ci-pipeline`, pushed to GitHub: the CI pipeline, the page objects and 81 Playwright tests, WebKit in CI, the Supabase backend and the docs. The older branches were merged into it; `feat/supabase-backend` is deleted, and `test/page-objects-core-flows` and `claude/automation-tests-pom-pages-x8qgmw` are still on GitHub, waiting to be deleted. A pull request from `ci-pipeline` into `main` is open; CI hasn't finished a run on this work yet.
 
-- [ ] Open the pull request(s): one from `test/page-objects-core-flows`, or split it so the tests PR ends at `7950f51` and the backend goes in its own PR from `feat/supabase-backend`
-- [ ] Watch the first CI run: the `e2e` job now also runs WebKit, and `npm ci` downloads the Supabase CLI
-- [ ] Push the repo to GitHub as public and confirm the first CI run is green
+- [ ] Get the first CI run green on the `ci-pipeline` pull request: the `e2e` job now also runs WebKit, and `npm ci` downloads the Supabase CLI
+- [ ] Merge the pull request into `main`
 - [ ] Protect `main`: require PRs and the three CI jobs
 - [ ] WebKit (iPhone 15) in the Playwright CI job: confirm its first run is green, then move it to Done
 
@@ -25,8 +24,6 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 
 ### Milestone 3: Backend and offline sync (Supabase)
 
-- [ ] Create the Supabase project and keep its URL and publishable key in `.env.local` (see `.env.example`)
-- [ ] Apply the migrations to it: `npx supabase link`, then `npx supabase db push`
 - [ ] Decide on "Confirm email" in the project's auth settings (the app handles both)
 - [ ] Try it on both phones: sign up, join with the code, plan offline, sync
 - [ ] Recipe photos in Supabase Storage
@@ -66,6 +63,11 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 - Live updates (Supabase Realtime) instead of syncing every minute, or is a minute fine?
 
 ## Done
+
+### 2026-11-08: Hosted Supabase project
+
+- [x] Connected the repo to the hosted project: URL and publishable key in the git-ignored `.env`, CLI linked
+- [x] Applied the migrations with `npx supabase db push --remote -p <database password>`; signed-out reads return nothing, and signed-out writes and `join_household` are refused
 
 ### 2026-11-07: Milestone 3, backend and offline sync
 

@@ -2,7 +2,7 @@
 
 A living document describing how Forkcast is built and why. Update it whenever a structural decision is made. For the to-do list and ideas, see [plan.md](./plan.md).
 
-_Last updated: 2026-11-07_
+_Last updated: 2026-11-08_
 
 ## 1. Overview
 
@@ -197,7 +197,7 @@ Access control: Supabase Row Level Security. Members see and change only their h
 | `npm run doctor` | `expo-doctor` dependency and config checks                        |
 | `npm run db:*`   | Local Supabase: `start`, `stop`, `reset`, `test` (pgTAP), `types` |
 
-**Supabase locally:** `npm run db:start` runs the stack in Docker (the CLI is a dev dependency) and applies `supabase/migrations/`. `npm run db:test` runs `supabase/tests/` against it. After a schema change, add a migration (`npx supabase migration new <name>`), then `npm run db:reset` and `npm run db:types`. `.env.local` (git-ignored, see `.env.example`) holds `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY`; Expo inlines them only when read in full as `process.env.EXPO_PUBLIC_…`. The hosted project gets the migrations with `npx supabase db push` after `supabase link`.
+**Supabase locally:** `npm run db:start` runs the stack in Docker (the CLI is a dev dependency) and applies `supabase/migrations/`. `npm run db:test` runs `supabase/tests/` against it. After a schema change, add a migration (`npx supabase migration new <name>`), then `npm run db:reset` and `npm run db:types`. `.env.local` (git-ignored, see `.env.example`) holds `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY`; Expo inlines them only when read in full as `process.env.EXPO_PUBLIC_…`. The hosted project gets the migrations with `npx supabase db push --remote -p <database password>` after `supabase link` (without `--remote` the CLI targets the local stack, and without the password its temporary login role fails on this project).
 
 **Web E2E tests:** `npm test` inside `tests/automation/` builds the web app in local mode (`EXPO_NO_DOTENV=1`, so `.env.local` keys don't leak in), serves it with `expo serve dist` and runs Playwright against that production build. It runs Chromium on a Pixel 7 viewport and, in CI, also WebKit on an iPhone 15, the closest match to the iPhone PWA. WebKit needs Ubuntu's libraries, so locally it runs only with `npm run test:webkit`. Root Jest (`roots`) and `tsc` (`exclude`) skip that folder. The tests use the Page Object Model: one class per screen in `pages/`, handed to specs as fixtures by `fixtures.ts`, so locators live in one place (see `tests/automation/README.md`). Locators go by role and accessible name, so new UI needs labels and roles that work on the web too.
 
