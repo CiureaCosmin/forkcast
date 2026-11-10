@@ -6,12 +6,7 @@ _Last updated: 2026-11-10_
 
 ## In progress
 
-**Where things stand (2026-11-10):** all work is on `ci-pipeline`, pushed to GitHub: the CI pipeline, the page objects and 81 Playwright tests, WebKit in CI, the Supabase backend and the docs. The older branches were merged into it; `feat/supabase-backend` is deleted, and `test/page-objects-core-flows` and `claude/automation-tests-pom-pages-x8qgmw` are still on GitHub, waiting to be deleted. A pull request from `ci-pipeline` into `main` is open; CI hasn't finished a run on this work yet.
-
-- [ ] Get the first CI run green on the `ci-pipeline` pull request: the `e2e` job now also runs WebKit, and `npm ci` downloads the Supabase CLI
-- [ ] Merge the pull request into `main`
-- [ ] Protect `main`: require PRs and the three CI jobs
-- [ ] WebKit (iPhone 15) in the Playwright CI job: confirm its first run is green, then move it to Done
+Nothing in flight: `main` has all the work, and CI passes on it. Next is trying the backend on both phones (Milestone 3) and shipping to our devices (Milestone 4).
 
 ## Next up
 
@@ -63,6 +58,13 @@ Product rules are in [architecture.md, section 5](./architecture.md#5-product-ru
 - Live updates (Supabase Realtime) instead of syncing every minute, or is a minute fine?
 
 ## Done
+
+### 2026-11-10: First CI run and `main` protected
+
+- [x] Merged the CI pipeline, the Playwright suite and the Supabase backend into `main` (PR #1); all three CI jobs passed on the first run
+- [x] WebKit (iPhone 15) runs next to Chromium in the Playwright CI job, and passed on its first run
+- [x] Deleted the merged branches, leaving only `main`
+- [x] Protected `main`: changes go through pull requests, and the three CI jobs must pass
 
 ### 2026-11-08: Hosted Supabase project
 
